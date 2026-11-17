@@ -38,13 +38,8 @@ juce_add_plugin(Echoplasm
 
 juce_generate_juce_header(Echoplasm)
 
-target_sources(Echoplasm
-    PRIVATE
-        Source/PluginProcessor.h
-        Source/PluginProcessor.cpp
-        Source/PluginEditor.h
-        Source/PluginEditor.cpp
-)
+file(GLOB_RECURSE PLUGIN_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
+target_sources(Echoplasm PRIVATE ${PLUGIN_SOURCES})
 
 target_compile_definitions(Echoplasm
     PUBLIC
