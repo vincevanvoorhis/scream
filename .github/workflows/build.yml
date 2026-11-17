@@ -1,0 +1,47 @@
+name: Build Echoplasm AU
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-macos-au:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake (Universal Binary arm64 + x86_64)
+        run: |
+          cmake -B build -G Xcode \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0"
+
+      - name: Build Echoplasm_AU in Release mode
+        run: |
+          cmake --build build --config Release --target Echoplasm_AU -- -j$(sysctl -n hw.ncpu)
+
+      - name: Stage and Ad-Hoc Codesign Echoplasm.component
+        run: |
+          mkdir -p dist
+          COMPONENT_PATH=$(find build -name "Echoplasm.component" -type d | head -n 1)
+          if [ -z "$COMPONENT_PATH" ]; then
+            echo "Error: Echoplasm.component not found in build directory."
+            exit 1
+          fi
+          ditto "$COMPONENT_PATH" dist/Echoplasm.component
+          codesign --force --deep --sign - dist/Echoplasm.component
+          codesign --verify --deep --strict --verbose=2 dist/Echoplasm.component
+          lipo -info dist/Echoplasm.component/Contents/MacOS/Echoplasm
+
+      - name: Upload Echoplasm.component artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoplasm.component
+          path: dist/Echoplasm.component
+          if-no-files-found: error
