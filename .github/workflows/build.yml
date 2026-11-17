@@ -24,7 +24,7 @@ jobs:
 
       - name: Build Echoplasm_AU in Release mode
         run: |
-          cmake --build build --config Release --target Echoplasm_AU -- -j$(sysctl -n hw.ncpu)
+          cmake --build build --config Release --target Echoplasm_AU --parallel
 
       - name: Stage and Ad-Hoc Codesign Echoplasm.component
         run: |
